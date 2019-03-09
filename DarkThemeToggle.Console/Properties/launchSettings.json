@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ToDark": {
+      "commandName": "Project",
+      "commandLineArgs": "0"
+    },
+    "ToLight": {
+      "commandName": "Project",
+      "commandLineArgs": "1"
+    }
+  }
+}

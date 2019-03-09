@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DarkThemeToggle.Core;
+using System.Security.AccessControl;
 using static System.Console;
+
+using DarkThemeToggle.Core;
 
 namespace DarkThemeToggle.Console
 {
@@ -13,51 +15,51 @@ namespace DarkThemeToggle.Console
 		{
 			WriteLine("Hello World!");
 
-			//var asm = Assembly.LoadFile(
-			//	"C:\\Users\\vladislav\\Projects\\DarkThemeToggle\\ClassLibrary1\\bin\\Debug\\netstandard2.0\\ClassLibrary1.dll");
+			var plugins1 = new List<(IThemeToggle, IPluginConfigLoader)>();
 
-			//var types = asm
-			//	.GetTypes()
-			//	.Where(t => t.GetInterfaces()
-			//		.Any(i => i.FullName == typeof(IInterface1).FullName));
-
-			//var plugins = types.Select(type => asm.CreateInstance(type.FullName) as IInterface1).ToList();
-
-			//foreach (var i in plugins)
-			//{
-			//	i.Abc();
-			//	WriteLine(i.Hello(3));
-			//}
-
-
-			//var asm = Assembly.LoadFile(
-			//	"C:\\Users\\vladislav\\Projects\\DarkThemeToggle\\QtThemeToggle\\bin\\Debug\\netstandard2.0\\QtThemeToggle.dll");
-
-			var asm = Assembly.LoadFrom("DarkThemeToggle.Plugin.QtCreator.dll");
-
-			var types1 = asm
-				.GetTypes()
-				.Where(t => t.GetInterfaces()
-					.Any(i => i.FullName == typeof(IThemeToggle).FullName));
-
-			var plugins = types1.Select(type => asm.CreateInstance(type.FullName) as IThemeToggle).ToList();
-
-			var types2 = asm
-				.GetTypes()
-				.Where(t => t.GetInterfaces()
-					.Any(i => i.FullName == typeof(IPluginConfigLoader).FullName));
-
-			var plugins2 = types2.Select(type => asm.CreateInstance(type.FullName) as IPluginConfigLoader).ToList();
-
-			var loader = plugins2.First();
-			if (loader.ConfigFileCreateState == PluginConfigFileCreateState.NotCreated)
+			var asms = new List<Assembly>
 			{
-				loader.CreateConfigFile();
+				Assembly.LoadFrom("DarkThemeToggle.Plugin.QtCreator.dll"),
+				Assembly.LoadFrom("DarkThemeToggle.Plugin.WinAppColorMode.dll")
+			};
+
+			foreach (var i in asms)
+			{
+				var pl = i
+					.GetTypes()
+					.Where(t => t.GetInterfaces()
+						.Any(p => p.FullName == typeof(IThemeToggle).FullName))
+					.Select(type => i.CreateInstance(type.FullName) as IThemeToggle)
+					.First();
+
+				var pll = i
+					.GetTypes()
+					.Where(t => t.GetInterfaces()
+						.Any(p => p.FullName == typeof(IPluginConfigLoader).FullName))
+					.Select(type => i.CreateInstance(type.FullName) as IPluginConfigLoader)
+					.First();
+
+				plugins1.Add((pl, pll));
 			}
 
-			var plugin = plugins.First();
-			plugin.Init(loader);
-			plugin.ToLight();
+			foreach (var (plugin, pluginConfigLoader) in plugins1)
+			{
+				if (pluginConfigLoader.ConfigFileCreateState == PluginConfigFileCreateState.NotCreated)
+				{
+					pluginConfigLoader.CreateConfigFile();
+				}
+
+				plugin.Init(pluginConfigLoader);
+
+				if (args[0] == "0")
+				{
+					plugin.ToDark();
+				}
+				else
+				{
+					plugin.ToLight();
+				}
+			}
 		}
 	}
 }
