@@ -16,37 +16,23 @@ namespace DarkThemeToggle.Console
 		{
 			WriteLine("Hello World!");
 
-			var plugins1 = new List<(IThemeToggle, IPluginConfigLoader)>();
-
 			var files = Directory.GetFiles(Directory.GetCurrentDirectory(), "DarkThemeToggle.Plugin.*.dll");
 
-			var asms = files.Select(Assembly.LoadFrom);
+			var assemblies = files.Select(Assembly.LoadFrom);
 
-			//var asms = new List<Assembly>
-			//{
-			//	Assembly.LoadFrom("DarkThemeToggle.Plugin.QtCreator.dll"),
-			//	Assembly.LoadFrom("DarkThemeToggle.Plugin.WinAppColorMode.dll"),
-			//	Assembly.LoadFrom("DarkThemeToggle.Plugin.VisualStudio.dll")
-			//};
-
-			foreach (var i in asms)
-			{
-				var pl = i
-					.GetTypes()
+			var plugins1 = (from i in assemblies
+				let pl = i.GetTypes()
 					.Where(t => t.GetInterfaces()
 						.Any(p => p.FullName == typeof(IThemeToggle).FullName))
 					.Select(type => i.CreateInstance(type.FullName) as IThemeToggle)
-					.First();
-
-				var pll = i
-					.GetTypes()
+					.First()
+				let pll = i.GetTypes()
 					.Where(t => t.GetInterfaces()
 						.Any(p => p.FullName == typeof(IPluginConfigLoader).FullName))
 					.Select(type => i.CreateInstance(type.FullName) as IPluginConfigLoader)
-					.First();
-
-				plugins1.Add((pl, pll));
-			}
+					.First()
+				select (pl, pll))
+			.ToList();
 
 			foreach (var (plugin, pluginConfigLoader) in plugins1)
 			{
