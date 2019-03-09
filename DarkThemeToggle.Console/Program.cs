@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.AccessControl;
@@ -17,11 +18,16 @@ namespace DarkThemeToggle.Console
 
 			var plugins1 = new List<(IThemeToggle, IPluginConfigLoader)>();
 
-			var asms = new List<Assembly>
-			{
-				Assembly.LoadFrom("DarkThemeToggle.Plugin.QtCreator.dll"),
-				Assembly.LoadFrom("DarkThemeToggle.Plugin.WinAppColorMode.dll")
-			};
+			var files = Directory.GetFiles(Directory.GetCurrentDirectory(), "DarkThemeToggle.Plugin.*.dll");
+
+			var asms = files.Select(Assembly.LoadFrom);
+
+			//var asms = new List<Assembly>
+			//{
+			//	Assembly.LoadFrom("DarkThemeToggle.Plugin.QtCreator.dll"),
+			//	Assembly.LoadFrom("DarkThemeToggle.Plugin.WinAppColorMode.dll"),
+			//	Assembly.LoadFrom("DarkThemeToggle.Plugin.VisualStudio.dll")
+			//};
 
 			foreach (var i in asms)
 			{
