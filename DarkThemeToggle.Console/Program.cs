@@ -16,22 +16,30 @@ namespace DarkThemeToggle.Console
 		{
 			WriteLine("Hello World!");
 
-			var files = Directory.GetFiles(Directory.GetCurrentDirectory(), "DarkThemeToggle.Plugin.*.dll");
+			//var files = Directory.GetFiles(Directory.GetCurrentDirectory(), "DarkThemeToggle.Plugin.*.dll");
 
-			var assemblies = files.Select(Assembly.LoadFrom);
+			//var assemblies = files.Select(Assembly.LoadFrom);
 
-			var plugins1 = (from i in assemblies
-				let pl = i.GetTypes()
-					.Where(t => t.GetInterfaces()
-						.Any(p => p.FullName == typeof(IThemeToggle).FullName))
-					.Select(type => i.CreateInstance(type.FullName) as IThemeToggle)
-					.First()
-				let pll = i.GetTypes()
-					.Where(t => t.GetInterfaces()
-						.Any(p => p.FullName == typeof(IPluginConfigLoader).FullName))
-					.Select(type => i.CreateInstance(type.FullName) as IPluginConfigLoader)
-					.First()
-				select (pl, pll))
+			var plugins1 = Directory.GetFiles(Directory.GetCurrentDirectory(), "DarkThemeToggle.Plugin.*.dll")
+					.Select(Assembly.LoadFrom)
+					.Select(i => new
+					{
+						i,
+						pl = i.GetTypes()
+							.Where(t => t.GetInterfaces().Any(p => p.FullName == typeof(IThemeToggle).FullName))
+							.Select(type => i.CreateInstance(type.FullName) as IThemeToggle)
+							.First()
+					})
+					.Select(j => new
+					{
+						j,
+						pll = j.i.GetTypes()
+							.Where(t => t.GetInterfaces()
+								.Any(p => p.FullName == typeof(IPluginConfigLoader).FullName))
+							.Select(type => j.i.CreateInstance(type.FullName) as IPluginConfigLoader)
+							.First()
+					})
+					.Select(p => (p.j.pl, p.pll))
 			.ToList();
 
 			foreach (var (plugin, pluginConfigLoader) in plugins1)
